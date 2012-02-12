@@ -1,0 +1,179 @@
+<HTML>
+<HEAD>
+<META NAME="GENERATOR" Content="Microsoft Visual Studio 8.0">
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+  <h1>
+    FontCreator 1.0</h1>
+  <p>
+    A command-line tool to end my bitmap font generation needs for-friggin-ever. I hope.
+    :)</p>
+  <h2>
+    Usage</h2>
+  FontCreator TTF_file size TFN_prefix [options] [charset files] (default
+  charset is ASCII chars 32-127)<br />
+  <br />
+  Options:<br />
+  <br />
+  <table border="1">
+    <tr>
+      <td style="width: 146px">
+  -h, --help</td>
+      <td style="width: 398px">
+        This help</td>
+    </tr>
+    <tr>
+      <td style="width: 146px">
+        -dpi #</td>
+      <td style="width: 398px">
+        DPI for font rendering (72 is default)</td>
+    </tr>
+    <tr>
+      <td style="width: 146px">
+  -bpp #</td>
+      <td style="width: 398px">
+        Bpp of bitmap files (8, 24, 32, default is 8)</td>
+    </tr>
+    <tr>
+      <td style="width: 146px; height: 23px">
+        -bold [#]</td>
+      <td style="width: 398px; height: 23px">
+        Generate a bold font (# is factor, default 20)</td>
+    </tr>
+    <tr>
+      <td style="width: 146px">
+        -italic [#]</td>
+      <td style="width: 398px">
+        Generate an italics font (# is factor, default 20)</td>
+    </tr>
+    <tr>
+      <td style="width: 146px">
+        -chars "chars"</td>
+      <td style="width: 398px">
+        Add specified chars to charset</td>
+    </tr>
+    <tr>
+      <td style="width: 146px">
+        -max #</td>
+      <td style="width: 398px">
+        Maximum texture size (power of 2, default is 1024)</td>
+    </tr>
+    <tr>
+      <td style="width: 146px">
+        -noASCII</td>
+      <td style="width: 398px">
+        Do <span style="text-decoration: underline">not</span> include the 32-127 chars
+        by default</td>
+    </tr>
+    <tr>
+      <td style="width: 146px">
+        -cp "codepage"</td>
+      <td style="width: 398px">
+        Codepage for translating 8-bit characters</td>
+    </tr>
+  </table>
+  <br />
+  Example:<br />
+  <pre>
+FontCreator C:\Windows\Fonts\ARIALUNI.TTF 80 "My Fonts\ArialNumsIt" -max 512 -noASCII -chars "0123456789" -italic -bold 30</pre>
+  That will generate files:<br />
+  <ul>
+    <li>My Fonts\ArialNumsIt.TFN</li>
+    <li>My Fonts\ArialNumsIt_00.tga</li>
+  </ul>
+  <h3>
+    Options details</h3>
+  <p>
+    I use the Freetype library for font rendering, it might support formats other than
+    TTF but I haven't tried them.</p>
+  <p>
+    Use double quotes around parameters that contain spaces. Especially important for
+    filenames.</p>
+  <p>
+    For font sizes and DPI settings, I have followed Photoshop's conventions.</p>
+  <p>
+    Bold and italics are "fake" deformations of the character bitmap; for the real effects
+    you need separate source font files. The optional parameter supplied to -italic
+    and -bold are a percentage of the total character width, and can be negative to
+    invert the effect. A bold parameter of -100 can't be used.</p>
+  <p>
+    Charset files are regular text files, either classic 8-bit characters or 16-bit
+    Unicode (UCS-2 Big Endian or Little Endian). You can add as many text files as you
+    want. Use -noASCII if you only want characters you supply directly (via -chars or
+    via charset files). FontCreator will not duplicate characters in the resulting font
+    regardless where they come from.</p>
+  <p>
+    Codepages are... well, it's a long and confusing topic. Ignore it and it will use
+    the system defaults. Use -cp "C" to avoid any translation. In Windows, you can use
+    -cp ".1252" (notice the leading dot) for the Latin-1 codepage, -cp ".1255" for Hebrew,
+    etc. You can find a list of Windows codepages at <a href="http://www.microsoft.com/typography/unicode/cscp.htm">
+      http://www.microsoft.com/typography/unicode/cscp.htm</a> or <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/intl/unicode_81rn.asp">
+        http://msdn.microsoft.com/library/default.asp?url=/library/en-us/intl/unicode_81rn.asp</a>,
+    and more info in general at <a href="http://en.wikipedia.org/wiki/Codepage">http://en.wikipedia.org/wiki/Codepage</a>.
+    I have no idea how this works in other operating systems. Codepage settings are
+    active at the point where they are specified, so if you have an 8-bit charset file
+    called "file1.txt" and write:</p>
+  <pre>
+FontCreator ... -cp ".437" file1.txt -cp ".850" file1.txt</pre>
+  <p>
+    then the charset file will be read twice, and interpreted differently each time.
+    <span style="text-decoration: underline">If you have any trouble, don't use -cp and
+      supply Unicode charset files instead.</span></p>
+  <h2>
+    File Formats</h2>
+  <p>
+    The TFN file is a plain text file where you can find the the list of texture files
+    and the parameters for each character in the font.</p>
+  <ul>
+    <li>The first line contains the number of textures, the number of characters, and
+      the font height (suggested distance between lines of text).</li><li>The following lines contain the names of each texture file (without path or extension), and the dimensions of the texture</li><li>Finally, there is a line for each character, of the form:</li></ul>
+  <pre>
+Unicode advance offsetX offsetY TextureIndex TextureU TextureV Width Height</pre>
+    <p>
+      The Unicode is hexadecimal (for example, 0x0020 would be the space ' '). Everything
+      else should be pretty much self-explanatory. To draw a character, draw the rectangle
+      (TextureU, TextureV, Width, Height) from the TextureIndex texture, at the position
+      (X + offsetX, Y + offsetY), then add "advance" to X, repeat this for each character
+      in your string. When going to the next line, just add the font's "height" to Y.</p>
+  <p>
+    The TFN file is deliberately minimalistic in structure. It is designed like that
+    to minimize loading complexity. It contains the texture dimensions as a helper in
+    case you later postprocess the TGAs and change their size - you need the original
+    dimensions in order to interpret the TextureU and TextureV of the characters.</p>
+  <p>
+    The TGA files are saved as follows:</p>
+  <ul>
+    <li>8bit -&gt; grayscale TGA</li>
+    <li>24bit -&gt; normal BGR TGA</li>
+    <li>32bit -&gt; normal BGRA TGA, RGB are all white and font is in the alpha channel</li>
+  </ul>
+  <h2>
+    Credits</h2>
+  FontCreator Copyright (C) 2006 by Javier Arévalo (<a href="http://www.iguanademos.com/Jare">http://www.iguanademos.com/Jare</a>)<br />
+  <br />
+  This software is provided 'as-is', without any express or implied warranty. In no
+  event will the authors be held liable for any damages arising from the use of this
+  software.<br />
+  <br />
+  Permission is granted to anyone to use this software for any purpose, including
+  commercial applications, and to alter it and redistribute it freely, subject to
+  the following restrictions:<br />
+  <ol>
+    <li>The origin of this software must not be misrepresented ; you must not claim that
+      you wrote the original software. If you use this software in a product, an acknowledgment
+      in the product documentation would be appreciated but is not required.</li>
+    <li>Altered source versions must be plainly marked as such, and must not be misrepresented
+      as being the original software.</li>
+    <li>This notice may not be removed or altered from any source distribution.</li>
+  </ol>
+  Portions of this software are Copyright (C) 1995-2005 Jean-loup Gailly and Mark
+  Adler (<a href="http://www.zlib.net">http://www.zlib.net</a>)<br />
+  <br />
+  Portions of this software are Copyright (C) 1996-2002 The FreeType Project (<a href="http://www.freetype.org">http://www.freetype.org</a>).
+  All rights reserved.<br />
+
+
+
+</BODY>
+</HTML>
